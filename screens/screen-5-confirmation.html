@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5 · Resolved · Delay Radar Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #EFEDE9; }
+  body { display: flex; justify-content: center; padding: 24px 12px; font-family: 'Manrope', system-ui, sans-serif; }
+  .screen { width: 390px; max-width: 100%; height: 844px; background: #FAF9F7; display: flex; flex-direction: column; color: #14131A; overflow: hidden; border-radius: 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); }
+  .appbar { height: 56px; flex: none; display: flex; align-items: center; justify-content: flex-end; padding: 0 12px; background: #FFFFFF; border-bottom: 1px solid #ECEAE6; }
+  .iconbtn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 9px; color: #14131A; text-decoration: none; flex: none; }
+  .content { flex: 1; overflow-y: auto; padding: 28px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+  .check { width: 68px; height: 68px; border-radius: 50%; background: #E3F6EC; color: #0F7A4E; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+  h2 { font-size: 20px; font-weight: 800; margin: 0; }
+  .sub { color: #6B6976; font-size: 13.5px; line-height: 1.5; max-width: 280px; }
+  .card { margin-top: 14px; width: 100%; background: #FFFFFF; border: 1px solid #ECEAE6; border-radius: 14px; padding: 16px; text-align: left; }
+  .row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; }
+  .row .k { color: #8B8996; }
+  .row .v { font-weight: 700; }
+  .feedback { margin-top: 26px; width: 100%; }
+  .feedback-label { font-size: 12.5px; font-weight: 700; color: #4A4953; margin-bottom: 10px; }
+  .fbtns { display: flex; gap: 8px; }
+  .fbtn { flex: 1; height: 40px; border-radius: 10px; border: 1.5px solid #ECEAE6; background: #FFFFFF; font-family: inherit; font-weight: 700; font-size: 12.5px; color: #14131A; cursor: pointer; }
+  .fbtn.chosen { border-color: #FF3B6E; background: #FFF5F8; color: #FF3B6E; }
+  .thanks { font-size: 12.5px; color: #0F7A4E; font-weight: 700; margin-top: 10px; display: none; }
+  .thanks.show { display: block; }
+  .bottombar { flex: none; padding: 14px 16px; border-top: 1px solid #ECEAE6; background: #FFFFFF; }
+  .btn-secondary { display: flex; align-items: center; justify-content: center; height: 46px; border-radius: 12px; background: #FFFFFF; color: #14131A; font-weight: 800; font-size: 14px; text-decoration: none; border: 1.5px solid #E4E2DE; }
+  .protonav { width: 390px; max-width:100%; margin: 0 auto 14px; text-align:center; font-family:'Manrope',sans-serif; }
+  .protonav a { font-size: 12.5px; font-weight: 700; color: #6B6976; text-decoration: none; }
+  .protonav a:hover { text-decoration: underline; }
+  .wrap-outer{ display:flex; flex-direction:column; align-items:center; }
+</style>
+</head>
+<body>
+<div class="wrap-outer">
+<div class="protonav"><a href="../index.html">&larr; Back to case study</a> &middot; Screen 5 of 5 &middot; Resolved</div>
+<div class="screen">
+  <div class="appbar">
+    <a class="iconbtn" href="screen-1-alert.html" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </a>
+  </div>
+  <div class="content">
+    <div class="check">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4 10-10"></path></svg>
+    </div>
+    <h2>You're all set</h2>
+    <div class="sub">A backup unit ships today from our Bengaluru warehouse. New tracking will appear here within a few hours.</div>
+
+    <div class="card">
+      <div class="row"><span class="k">Order</span><span class="v">#MYN48213</span></div>
+      <div class="row"><span class="k">Resolution</span><span class="v">Express re-ship</span></div>
+      <div class="row"><span class="k">New arrival</span><span class="v">Thu, 18 Sept</span></div>
+      <div class="row"><span class="k">Wallet credit</span><span class="v">&#8377;150 (kept)</span></div>
+    </div>
+
+    <div class="feedback">
+      <div class="feedback-label">How did we do?</div>
+      <div class="fbtns">
+        <button class="fbtn" data-rating="great">Great</button>
+        <button class="fbtn" data-rating="ok">Okay</button>
+        <button class="fbtn" data-rating="poor">Not great</button>
+      </div>
+      <div class="thanks" id="thanksMsg">Thanks &mdash; that helps us catch delays sooner next time.</div>
+    </div>
+  </div>
+  <div class="bottombar">
+    <a class="btn-secondary" href="screen-1-alert.html">Back to Orders</a>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  try {
+    var btns = document.querySelectorAll('.fbtn');
+    var thanks = document.getElementById('thanksMsg');
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        btns.forEach(function(b){ b.classList.remove('chosen'); });
+        btn.classList.add('chosen');
+        thanks.classList.add('show');
+      });
+    });
+  } catch(e) { /* feedback UI is a convenience only */ }
+})();
+</script>
+</body>
+</html>

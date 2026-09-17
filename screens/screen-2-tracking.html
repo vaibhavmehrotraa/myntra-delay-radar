@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2 · Transparent tracking · Delay Radar Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #EFEDE9; }
+  body { display: flex; justify-content: center; padding: 24px 12px; font-family: 'Manrope', system-ui, sans-serif; }
+  .screen { width: 390px; max-width: 100%; height: 844px; background: #FAF9F7; display: flex; flex-direction: column; color: #14131A; overflow: hidden; border-radius: 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); }
+  .appbar { height: 56px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: #FFFFFF; border-bottom: 1px solid #ECEAE6; }
+  .appbar h1 { font-size: 15.5px; font-weight: 800; margin: 0; }
+  .iconbtn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 9px; color: #14131A; text-decoration: none; flex: none; }
+  .content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .card { background: #FFFFFF; border: 1px solid #ECEAE6; border-radius: 14px; padding: 16px; }
+  .delay-card { background: #FFE7EE; border: 1px solid #FFC7D8; border-radius: 16px; padding: 16px; display: flex; gap: 12px; }
+  .icon-chip { width: 36px; height: 36px; border-radius: 10px; background: #FF3B6E; color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+  .muted { color: #8B8996; font-size: 12.5px; }
+  .step { display: flex; gap: 12px; }
+  .step-rail { display: flex; flex-direction: column; align-items: center; width: 20px; flex: none; }
+  .dot { width: 18px; height: 18px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; }
+  .dot-done { background: #1BA672; }
+  .dot-warn { background: #F5A524; }
+  .dot-pending { background: #E4E2DE; }
+  .rail-line { width: 2px; flex: 1; background: #E4E2DE; margin: 2px 0; }
+  .step:last-child .rail-line { display: none; }
+  .step-body { padding-bottom: 18px; flex: 1; }
+  .step-title { font-weight: 700; font-size: 13.5px; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: #FFF3DC; color: #8A5A00; margin-top: 4px; }
+  .credit-card { background: #E3F6EC; border: 1px solid #BFE9D3; border-radius: 14px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
+  .bottombar { flex: none; padding: 14px 16px; border-top: 1px solid #ECEAE6; background: #FFFFFF; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+  .btn-primary { display: flex; align-items: center; justify-content: center; gap: 8px; height: 48px; border-radius: 12px; background: #FF3B6E; color: #fff; font-weight: 800; font-size: 14px; text-decoration: none; }
+  .btn-ghost { text-align: center; color: #6B6976; font-size: 12.5px; font-weight: 700; text-decoration: underline; background:none; border:none; cursor:pointer; font-family:inherit; }
+  .protonav { width: 390px; max-width:100%; margin: 0 auto 14px; text-align:center; font-family:'Manrope',sans-serif; }
+  .protonav a { font-size: 12.5px; font-weight: 700; color: #6B6976; text-decoration: none; }
+  .protonav a:hover { text-decoration: underline; }
+  .wrap-outer{ display:flex; flex-direction:column; align-items:center; }
+</style>
+</head>
+<body>
+<div class="wrap-outer">
+<div class="protonav"><a href="../index.html">&larr; Back to case study</a> &middot; Screen 2 of 5 &middot; Transparent tracking</div>
+<div class="screen">
+  <div class="appbar">
+    <a class="iconbtn" href="screen-1-alert.html" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+    </a>
+    <h1>Order #MYN48213</h1>
+  </div>
+  <div class="content">
+    <div class="delay-card">
+      <span class="icon-chip">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>
+      </span>
+      <div>
+        <div style="font-weight:800; font-size:14px;">New ETA: Fri, 19 Sept by 8 PM</div>
+        <div class="muted" style="margin-top:3px; text-decoration:line-through;">Originally Wed, 17 Sept</div>
+        <div class="muted" style="margin-top:5px; line-height:1.45;">Reason: held 18 hours at the Bhiwandi sorting hub &mdash; longer than the usual 6.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:800; font-size:13.5px; margin-bottom:12px;">Tracking</div>
+
+      <div class="step">
+        <div class="step-rail"><div class="dot dot-done"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4 10-10"></path></svg></div><div class="rail-line"></div></div>
+        <div class="step-body"><div class="step-title">Ordered</div><div class="muted">12 Sept</div></div>
+      </div>
+      <div class="step">
+        <div class="step-rail"><div class="dot dot-done"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4 10-10"></path></svg></div><div class="rail-line"></div></div>
+        <div class="step-body"><div class="step-title">Packed &amp; shipped</div><div class="muted">13&ndash;14 Sept</div></div>
+      </div>
+      <div class="step">
+        <div class="step-rail"><div class="dot dot-warn"></div><div class="rail-line"></div></div>
+        <div class="step-body">
+          <div class="step-title">At Bhiwandi hub</div>
+          <div class="muted">Arrived 15 Sept, 6 AM</div>
+          <span class="badge">18h dwell &middot; usually 6h</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-rail"><div class="dot dot-pending"></div><div class="rail-line"></div></div>
+        <div class="step-body"><div class="step-title" style="color:#8B8996;">Out for delivery</div><div class="muted">Expected 19 Sept</div></div>
+      </div>
+      <div class="step">
+        <div class="step-rail"><div class="dot dot-pending"></div></div>
+        <div class="step-body"><div class="step-title" style="color:#8B8996;">Delivered</div></div>
+      </div>
+    </div>
+
+    <div class="credit-card">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F7A4E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg>
+      <div>
+        <div style="font-weight:800; font-size:13.5px; color:#0F7A4E;">&#8377;150 credit already added</div>
+        <div class="muted" style="margin-top:2px;">Applied automatically to your Myntra wallet &mdash; no action needed.</div>
+      </div>
+    </div>
+  </div>
+  <div class="bottombar">
+    <a class="btn-primary" href="screen-3-choice.html">Choose how we make it right
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+    </a>
+    <a class="btn-ghost" href="screen-4-support.html">Need to talk to someone?</a>
+  </div>
+</div>
+</div>
+</body>
+</html>

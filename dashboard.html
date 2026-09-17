@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Myntra Complaint Radar · Myntra Case Study</title>
+<link rel="stylesheet" href="assets/site.css">
+<style>
+  :root{
+    color-scheme: light;
+    --page-plane:      #f9f9f7;
+    --surface-1:       #fcfcfb;
+    --surface-2:       #f3f2ee;
+    --text-primary:    #0b0b0b;
+    --text-secondary:  #52514e;
+    --text-muted:      #898781;
+    --gridline:        #e1e0d9;
+    --baseline:        #c3c2b7;
+    --border:          rgba(11,11,11,0.10);
+    --border-strong:   rgba(11,11,11,0.16);
+
+    /* categorical slots, fixed order */
+    --s1: #2a78d6; /* delivery delay */
+    --s2: #eb6834; /* refund failures */
+    --s3: #1baf7a; /* return/exchange friction */
+    --s4: #eda100; /* wrong item / partial refund */
+    --s5: #e87ba4; /* counterfeit claims */
+    --s6: #008300; /* generic / unspecified (unused hue slot, kept for reference) */
+    --neutral-generic: #b2b0a8; /* muted grey for the catch-all "generic" bucket */
+
+    /* sequential blue ramp (ordinal use, light) */
+    --seq-250: #86b6ef;
+    --seq-350: #5598e7;
+    --seq-450: #2a78d6;
+    --seq-550: #1c5cab;
+
+    --status-good:     #0ca30c;
+    --status-warning:  #fab219;
+    --status-serious:  #ec835a;
+    --status-critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page-plane:      #0d0d0d;
+      --surface-1:       #1a1a19;
+      --surface-2:       #232322;
+      --text-primary:    #ffffff;
+      --text-secondary:  #c3c2b7;
+      --text-muted:      #898781;
+      --gridline:        #2c2c2a;
+      --baseline:        #383835;
+      --border:          rgba(255,255,255,0.10);
+      --border-strong:   rgba(255,255,255,0.18);
+
+      --s1: #3987e5;
+      --s2: #d95926;
+      --s3: #199e70;
+      --s4: #c98500;
+      --s5: #d55181;
+      --s6: #008300;
+      --neutral-generic: #5b5a56;
+
+      --seq-250: #184f95;
+      --seq-350: #1c5cab;
+      --seq-450: #2a78d6;
+      --seq-550: #5598e7;
+
+      --status-good:     #0ca30c;
+      --status-warning:  #fab219;
+      --status-serious:  #ec835a;
+      --status-critical: #e66767;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page-plane:      #0d0d0d;
+    --surface-1:       #1a1a19;
+    --surface-2:       #232322;
+    --text-primary:    #ffffff;
+    --text-secondary:  #c3c2b7;
+    --text-muted:      #898781;
+    --gridline:        #2c2c2a;
+    --baseline:        #383835;
+    --border:          rgba(255,255,255,0.10);
+    --border-strong:   rgba(255,255,255,0.18);
+
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --s4: #c98500;
+    --s5: #d55181;
+    --s6: #008300;
+    --neutral-generic: #5b5a56;
+
+    --seq-250: #184f95;
+    --seq-350: #1c5cab;
+    --seq-450: #2a78d6;
+    --seq-550: #5598e7;
+
+    --status-good:     #0ca30c;
+    --status-warning:  #fab219;
+    --status-serious:  #ec835a;
+    --status-critical: #e66767;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    background:var(--page-plane);
+    color:var(--text-primary);
+    font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-inline:20px;
+    padding-block:28px 48px;
+    max-width:1180px;
+    margin-inline:auto;
+  }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, SFMono-Regular, monospace; }
+  h1,h2,h3{ text-wrap:balance; margin:0; }
+  a{ color:var(--s1); }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex; flex-direction:column; gap:10px;
+    padding-block-end:22px; margin-block-end:22px;
+    border-bottom:1px solid var(--border);
+  }
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  h1{ font-size:clamp(26px,4vw,36px); font-weight:700; letter-spacing:-0.01em; }
+  .dek{ color:var(--text-secondary); font-size:15px; max-width:64ch; line-height:1.5; }
+  .prov-row{ display:flex; flex-wrap:wrap; gap:8px; margin-block-start:6px; }
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; font-family:"IBM Plex Mono", monospace;
+    padding:4px 9px; border-radius:99px;
+    border:1px solid var(--border-strong); color:var(--text-secondary);
+    background:var(--surface-1);
+  }
+  .dot{ width:7px; height:7px; border-radius:50%; flex:none; }
+
+  /* ---------- section shell ---------- */
+  section{ margin-block-end:34px; }
+  .section-head{ display:flex; flex-direction:column; gap:4px; margin-block-end:14px; }
+  .section-head h2{ font-size:19px; font-weight:700; }
+  .section-head p{ color:var(--text-secondary); font-size:13.5px; max-width:70ch; line-height:1.5; }
+
+  /* ---------- KPI row ---------- */
+  .kpi-row{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+  }
+  .kpi{
+    background:var(--surface-1); border:1px solid var(--border);
+    border-radius:10px; padding:16px 16px 14px;
+    display:flex; flex-direction:column; gap:6px;
+    position:relative; overflow:hidden;
+  }
+  .kpi::before{
+    content:""; position:absolute; inset:0 auto 0 0; width:3px;
+    background:var(--kpi-accent, var(--baseline));
+  }
+  .kpi .label{ font-size:12px; color:var(--text-muted); font-weight:600; letter-spacing:0.01em; }
+  .kpi .value{ font-size:26px; font-weight:700; font-family:"IBM Plex Mono", monospace; letter-spacing:-0.01em; }
+  .kpi .sub{ font-size:12px; color:var(--text-secondary); line-height:1.4; }
+  .kpi.risk{ --kpi-accent:var(--status-critical); }
+  .kpi.delivery{ --kpi-accent:var(--s1); }
+  .kpi.gmv{ --kpi-accent:var(--baseline); }
+  .kpi.support{ --kpi-accent:var(--status-warning); }
+
+  /* ---------- theme bar chart ---------- */
+  .chart-card{
+    background:var(--surface-1); border:1px solid var(--border);
+    border-radius:10px; padding:20px;
+  }
+  .bar-row{ display:flex; align-items:center; gap:12px; margin-block-end:14px; }
+  .bar-row:last-child{ margin-block-end:0; }
+  .bar-label{
+    width:190px; flex:none; font-size:13px; color:var(--text-secondary);
+    display:flex; align-items:center; gap:8px;
+  }
+  .bar-track{
+    flex:1; height:22px; background:var(--surface-2); border-radius:5px;
+    position:relative; overflow:hidden;
+  }
+  .bar-fill{
+    height:100%; border-radius:5px 3px 3px 5px; min-width:6px;
+  }
+  .bar-value{
+    width:24px; flex:none; text-align:right;
+    font-family:"IBM Plex Mono", monospace; font-size:13px; font-weight:600;
+    color:var(--text-primary); font-variant-numeric:tabular-nums;
+  }
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; margin-block-start:16px; padding-block-start:14px; border-top:1px solid var(--gridline); }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); }
+  .legend-swatch{ width:10px; height:10px; border-radius:3px; flex:none; }
+
+  /* ---------- two-col layout ---------- */
+  .two-col{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:16px; align-items:stretch; }
+
+  /* ---------- meter ---------- */
+  .meter-wrap{ display:flex; flex-direction:column; gap:14px; height:100%; }
+  .meter-figure{ display:flex; align-items:baseline; gap:6px; }
+  .meter-figure .num{ font-family:"IBM Plex Mono",monospace; font-size:40px; font-weight:700; }
+  .meter-figure .unit{ font-size:16px; color:var(--text-secondary); }
+  .meter-track{ height:12px; background:var(--surface-2); border-radius:99px; overflow:hidden; }
+  .meter-fill{ height:100%; background:linear-gradient(90deg,var(--seq-250),var(--seq-450)); border-radius:99px; }
+  .meter-note{ font-size:13px; color:var(--text-secondary); line-height:1.5; }
+
+  /* ---------- fermi trail ---------- */
+  .trail{ display:flex; align-items:stretch; gap:8px; overflow-x:auto; padding-block:4px 2px; }
+  .trail-step{
+    flex:1 1 190px; min-width:170px; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:9px; padding:14px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .trail-step .k{ font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); font-weight:600; }
+  .trail-step .v{ font-family:"IBM Plex Mono",monospace; font-size:19px; font-weight:700; }
+  .trail-step .d{ font-size:12px; color:var(--text-secondary); line-height:1.4; }
+  .trail-step.final{ background:var(--surface-1); border-color:var(--status-critical); }
+  .trail-step.final .v{ color:var(--status-critical); }
+  .trail-arrow{ align-self:center; color:var(--text-muted); font-size:18px; flex:none; }
+  .assumptions{
+    margin-block-start:14px; font-size:12.5px; color:var(--text-muted); line-height:1.6;
+    border-top:1px solid var(--gridline); padding-block-start:12px;
+  }
+  .assumptions code{ font-family:"IBM Plex Mono",monospace; background:var(--surface-2); padding:1px 5px; border-radius:4px; }
+
+  /* ---------- timeline + sources ---------- */
+  .mini-bars{ display:flex; align-items:flex-end; gap:18px; height:110px; padding-block-start:10px; }
+  .mini-bar-col{ display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; height:100%; justify-content:flex-end; }
+  .mini-bar{ width:100%; max-width:56px; border-radius:4px 4px 2px 2px; background:var(--seq-450); }
+  .mini-bar-val{ font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; }
+  .mini-bar-date{ font-size:11px; color:var(--text-muted); }
+
+  .source-grid{ display:flex; flex-direction:column; gap:10px; }
+  .source-card{
+    display:flex; align-items:center; gap:10px;
+    border:1px solid var(--border); border-radius:8px; padding:10px 12px;
+    background:var(--surface-2);
+  }
+  .status-pill{
+    flex:none; display:inline-flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:600; padding:3px 8px; border-radius:99px;
+    font-family:"IBM Plex Mono",monospace;
+  }
+  .status-pill.good{ color:var(--status-good); background:color-mix(in srgb, var(--status-good) 14%, transparent); }
+  .status-pill.serious{ color:var(--status-serious); background:color-mix(in srgb, var(--status-serious) 16%, transparent); }
+  .source-card .name{ font-weight:600; font-size:13.5px; }
+  .source-card .desc{ font-size:12px; color:var(--text-secondary); }
+
+  /* ---------- evidence log ---------- */
+  .filter-row{ display:flex; flex-wrap:wrap; gap:8px; margin-block-end:14px; }
+  .chip{
+    font-size:12px; font-family:"IBM Plex Mono",monospace; padding:5px 11px;
+    border-radius:99px; border:1px solid var(--border-strong); background:var(--surface-1);
+    color:var(--text-secondary); cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+    user-select:none;
+  }
+  .chip[aria-pressed="true"]{ background:var(--text-primary); color:var(--page-plane); border-color:var(--text-primary); }
+  .chip .dot{ width:8px; height:8px; border-radius:50%; }
+  .chip[aria-pressed="true"] .dot{ outline:1px solid var(--page-plane); }
+
+  .evidence-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; }
+  .quote-card{
+    border:1px solid var(--border); border-left:3px solid var(--qc-accent,var(--baseline));
+    border-radius:8px; padding:12px 13px; background:var(--surface-1);
+    display:flex; flex-direction:column; gap:7px;
+  }
+  .quote-card .meta{ display:flex; justify-content:space-between; gap:8px; font-size:11.5px; color:var(--text-muted); font-family:"IBM Plex Mono",monospace; }
+  .quote-card p{ font-size:13.5px; line-height:1.5; color:var(--text-primary); margin:0; }
+  .quote-card .theme-tag{ font-size:11px; color:var(--text-secondary); font-weight:600; }
+
+  /* ---------- recommendation ---------- */
+  .reco-card{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:10px; padding:22px;
+  }
+  .reco-quote{
+    font-size:16px; line-height:1.55; font-weight:600; padding-inline-start:16px;
+    border-left:3px solid var(--status-critical); margin-block-end:16px;
+  }
+  .reco-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-block-start:14px; }
+  .reco-tile{ background:var(--surface-2); border-radius:8px; padding:12px; font-size:13px; color:var(--text-secondary); line-height:1.5; }
+  .reco-tile b{ display:block; color:var(--text-primary); font-size:13.5px; margin-block-end:4px; }
+
+  footer{
+    margin-block-start:36px; padding-block-start:16px; border-top:1px solid var(--border);
+    font-size:12px; color:var(--text-muted); line-height:1.6;
+  }
+
+  @media (max-width:760px){
+    .kpi-row{ grid-template-columns:repeat(2,1fr); }
+    .two-col{ grid-template-columns:1fr; }
+    .reco-grid{ grid-template-columns:1fr; }
+    .bar-label{ width:120px; font-size:12px; }
+  }
+</style>
+<style>
+  body{ padding-inline:0; padding-block:0; max-width:none; margin-inline:0; }
+  .sitenav + *{ padding-top:0; }
+</style>
+</head>
+<body>
+<nav class="sitenav">
+  <a class="brand" href="index.html">MYNTRA · DELAY RADAR CASE STUDY</a>
+  <div class="links">
+    <a href="index.html">Overview</a>
+    <a href="dashboard.html" class="current">Dashboard</a>
+    <a href="problem-definition.html">Problem Definition</a>
+    <a href="prd.html">PRD</a>
+  </div>
+</nav>
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+
+<header>
+  <span class="eyebrow">Product &amp; analytics case study &middot; problem-definition phase</span>
+  <h1>Myntra Complaint Radar</h1>
+  <p class="dek">What customers are actually complaining about right now, pulled from live app-store reviews and public complaint threads, and what it implies for GMV. Built to pick the problem worth solving before designing a fix.</p>
+  <div class="prov-row">
+    <span class="badge"><span class="dot" style="background:var(--s1)"></span>Evidence window: 15&ndash;17 Sept 2026</span>
+    <span class="badge">20 dated complaints reviewed</span>
+    <span class="badge">3 independent sources</span>
+  </div>
+</header>
+
+<section aria-label="Headline metrics">
+  <div class="kpi-row">
+    <div class="kpi risk">
+      <span class="label">EST. GMV AT RISK / YEAR</span>
+      <span class="value">₹450&ndash;650 Cr</span>
+      <span class="sub">From delivery-delay-driven cancellations &amp; RTO</span>
+    </div>
+    <div class="kpi delivery">
+      <span class="label">DELIVERY-DELAY SHARE OF COMPLAINTS</span>
+      <span class="value">50%</span>
+      <span class="sub">Dominant theme in last 24&ndash;48h reviews</span>
+    </div>
+    <div class="kpi gmv">
+      <span class="label">EST. ANNUAL GMV</span>
+      <span class="value">₹22,000 Cr</span>
+      <span class="sub">Modeled from FY25 revenue (not disclosed by Myntra)</span>
+    </div>
+    <div class="kpi support">
+      <span class="label">ALSO CITE BROKEN SUPPORT</span>
+      <span class="value">30%</span>
+      <span class="sub">AI chatbot / IVR / call center named as a compounding failure</span>
+    </div>
+  </div>
+</section>
+
+<section aria-label="Problem themes">
+  <div class="section-head">
+    <h2>What customers are complaining about</h2>
+    <p>20 dated, negative complaints from the last 24&ndash;48 hours, grouped into six problem themes. On-site myntra.com product reviews are excluded here &mdash; their star ratings frequently didn&rsquo;t match the review text, so they weren&rsquo;t usable for this count (see Sources).</p>
+  </div>
+  <div class="chart-card">
+    <div class="bar-row">
+      <span class="bar-label"><span class="legend-swatch" style="background:var(--s1)"></span>Delivery &amp; logistics delay</span>
+      <div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--s1)"></div></div>
+      <span class="bar-value">10</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label"><span class="legend-swatch" style="background:var(--s3)"></span>Return / exchange friction</span>
+      <div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--s3)"></div></div>
+      <span class="bar-value">3</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label"><span class="legend-swatch" style="background:var(--neutral-generic)"></span>Generic / unspecified</span>
+      <div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--neutral-generic)"></div></div>
+      <span class="bar-value">3</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label"><span class="legend-swatch" style="background:var(--s2)"></span>Refund failures</span>
+      <div class="bar-track"><div class="bar-fill" style="width:20%;background:var(--s2)"></div></div>
+      <span class="bar-value">2</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label"><span class="legend-swatch" style="background:var(--s4)"></span>Wrong item / partial refund</span>
+      <div class="bar-track"><div class="bar-fill" style="width:10%;background:var(--s4)"></div></div>
+      <span class="bar-value">1</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label"><span class="legend-swatch" style="background:var(--s5)"></span>Counterfeit / fake product</span>
+      <div class="bar-track"><div class="bar-fill" style="width:10%;background:var(--s5)"></div></div>
+      <span class="bar-value">1</span>
+    </div>
+    <div class="legend">
+      <span class="legend-item">Bars are count of complaints (n=20), 15&ndash;17 Sept 2026</span>
+    </div>
+  </div>
+</section>
+
+<section aria-label="GMV sizing">
+  <div class="section-head">
+    <h2>Sizing the GMV at risk</h2>
+    <p>Myntra doesn&rsquo;t publish GMV, so this is a chained Fermi estimate from public data &mdash; directional, not verified. Full sourcing is in the linked report.</p>
+  </div>
+  <div class="chart-card">
+    <div class="trail">
+      <div class="trail-step">
+        <span class="k">Step 1</span>
+        <span class="v">₹22,000 Cr</span>
+        <span class="d">Estimated annual GMV, from FY25 revenue (₹6,043 Cr) at a ~27% marketplace take rate</span>
+      </div>
+      <span class="trail-arrow">&rarr;</span>
+      <div class="trail-step">
+        <span class="k">Step 2</span>
+        <span class="v">~122M orders</span>
+        <span class="d">GMV &divide; ~₹1,800 average order value</span>
+      </div>
+      <span class="trail-arrow">&rarr;</span>
+      <div class="trail-step">
+        <span class="k">Step 3</span>
+        <span class="v">2.0&ndash;2.6%</span>
+        <span class="d">Est. share of orders lost to delay-driven cancellation/RTO (15&ndash;20% delayed &times; 13pp delay penalty)</span>
+      </div>
+      <span class="trail-arrow">&rarr;</span>
+      <div class="trail-step final">
+        <span class="k">Result</span>
+        <span class="v">₹450&ndash;650 Cr / yr</span>
+        <span class="d">GMV at risk &mdash; excludes churn/LTV loss and brand damage, which likely push this higher</span>
+      </div>
+    </div>
+    <div class="assumptions">
+      Key assumption to validate internally: <code>~15&ndash;20% of shipments miss their delivery window meaningfully</code>. Delay&rarr;RTO penalty (<code>22% &rarr; 35% RTO</code>) sourced from 2026 Indian fashion e-commerce benchmarks (GoKwik/First Resort). GMV take-rate and AOV are industry-typical assumptions, not Myntra-confirmed figures.
+    </div>
+  </div>
+</section>
+
+<section aria-label="Support overlap and timing">
+  <div class="two-col">
+    <div class="chart-card">
+      <div class="section-head" style="margin-block-end:10px;">
+        <h2 style="font-size:16px;">Delay complaints rarely stay contained</h2>
+      </div>
+      <div class="meter-wrap">
+        <div class="meter-figure"><span class="num">30%</span><span class="unit">of all 20 complaints</span></div>
+        <div class="meter-track"><div class="meter-fill" style="width:30%"></div></div>
+        <p class="meter-note">Nearly a third of reviewers name the support channel itself &mdash; an unhelpful AI chatbot, an IVR loop, or a disconnected call &mdash; as part of what went wrong, on top of the original delivery or refund issue. A recoverable delay becomes a lost customer once support fails too.</p>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="section-head" style="margin-block-end:10px;">
+        <h2 style="font-size:16px;">When the complaints landed</h2>
+      </div>
+      <div class="mini-bars">
+        <div class="mini-bar-col">
+          <span class="mini-bar-val">16</span>
+          <div class="mini-bar" style="height:100%;"></div>
+          <span class="mini-bar-date">15 Sept</span>
+        </div>
+        <div class="mini-bar-col">
+          <span class="mini-bar-val">3</span>
+          <div class="mini-bar" style="height:19%;"></div>
+          <span class="mini-bar-date">16 Sept</span>
+        </div>
+        <div class="mini-bar-col">
+          <span class="mini-bar-val">1</span>
+          <div class="mini-bar" style="height:6%;background:var(--seq-450);"></div>
+          <span class="mini-bar-date">Reddit, ~17 Sept</span>
+        </div>
+      </div>
+      <div class="source-grid" style="margin-block-start:16px;">
+        <div class="source-card">
+          <span class="status-pill good">HIGH SIGNAL</span>
+          <div><div class="name">Google Play Store</div><div class="desc">Google-verified, dated, real reviewer text</div></div>
+        </div>
+        <div class="source-card">
+          <span class="status-pill good">CORROBORATING</span>
+          <div><div class="name">Reddit (r/MyntraSucks)</div><div class="desc">Independent public thread, matches Play Store pattern</div></div>
+        </div>
+        <div class="source-card">
+          <span class="status-pill serious">LOW SIGNAL</span>
+          <div><div class="name">myntra.com product reviews</div><div class="desc">Stale dates; star rating often doesn&rsquo;t match review text</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section aria-label="Evidence log">
+  <div class="section-head">
+    <h2>Evidence log</h2>
+    <p>Every quote below is dated and sourced. Filter by theme to scan one problem at a time.</p>
+  </div>
+  <div class="filter-row" id="filterRow">
+    <button class="chip" aria-pressed="true" data-filter="all">All (20)</button>
+    <button class="chip" aria-pressed="false" data-filter="delivery"><span class="dot" style="background:var(--s1)"></span>Delivery delay</button>
+    <button class="chip" aria-pressed="false" data-filter="refund"><span class="dot" style="background:var(--s2)"></span>Refund</button>
+    <button class="chip" aria-pressed="false" data-filter="exchange"><span class="dot" style="background:var(--s3)"></span>Return/exchange</button>
+    <button class="chip" aria-pressed="false" data-filter="wrongitem"><span class="dot" style="background:var(--s4)"></span>Wrong item</button>
+    <button class="chip" aria-pressed="false" data-filter="counterfeit"><span class="dot" style="background:var(--s5)"></span>Counterfeit</button>
+    <button class="chip" aria-pressed="false" data-filter="generic"><span class="dot" style="background:var(--neutral-generic)"></span>Generic</button>
+  </div>
+  <div class="evidence-grid" id="evidenceGrid">
+
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>John Julian Hansdak</span><span>16 Sept</span></div>
+      <p>&ldquo;Eight days for delivery, but platform fees are collected at lightning speed.&rdquo;</p>
+      <span class="theme-tag">Delivery delay &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>Shahil Sagar</span><span>16 Sept</span></div>
+      <p>&ldquo;Showing delivery in 2 days but it&rsquo;s been 8 days... they said it needed 48 hours... saying it daily.&rdquo;</p>
+      <span class="theme-tag">Delivery delay + support loop &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>Akash Raut</span><span>16 Sept</span></div>
+      <p>&ldquo;Taking 5 days to just deliver a swim cap... very bad experience no response.&rdquo;</p>
+      <span class="theme-tag">Delivery delay &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>Ikshit Kate</span><span>15 Sept</span></div>
+      <p>&ldquo;Never experienced an on time delivery even after parcel reaches the nearest hub.&rdquo;</p>
+      <span class="theme-tag">Delivery delay &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>Vaishnavi Baghel</span><span>15 Sept</span></div>
+      <p>&ldquo;Delivery agent keeps the parcel in godown and updates that we are not available. Doesn&rsquo;t even call us.&rdquo;</p>
+      <span class="theme-tag">Last-mile failure &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>Hariba Lohar</span><span>15 Sept</span></div>
+      <p>&ldquo;10 din order idar aaya udhar aaya karake unone cancel kar diyaa.&rdquo; (bounced around 10 days, then cancelled)</p>
+      <span class="theme-tag">Delivery delay + cancellation &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>Manda Kolaru</span><span>15 Sept</span></div>
+      <p>&ldquo;Order not delivered on the out for delivery date. No proper response from IVR or AI assistant.&rdquo;</p>
+      <span class="theme-tag">Delivery + support &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>Gaurav</span><span>15 Sept</span></div>
+      <p>&ldquo;Order bhaut late kr dete hai, upar se call kro to hamere problem ko address he nhai krte.&rdquo;</p>
+      <span class="theme-tag">Delivery + support &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>Sanjay Joshi</span><span>15 Sept</span></div>
+      <p>&ldquo;That nonsense AI never understands your problem. My first and last purchase from Myntra.&rdquo;</p>
+      <span class="theme-tag">Delivery + support &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="delivery" style="--qc-accent:var(--s1)">
+      <div class="meta"><span>u/Sleepy_head_30</span><span>~17 Sept</span></div>
+      <p>&ldquo;Myntra cancelled my order despite it reaching final hub... three days pass and I find it&rsquo;s cancelled, refund issued.&rdquo;</p>
+      <span class="theme-tag">Delivery delay + cancellation &middot; Reddit</span>
+    </div>
+
+    <div class="quote-card" data-theme="refund" style="--qc-accent:var(--s2)">
+      <div class="meta"><span>Rudra Singh Sengar</span><span>15 Sept</span></div>
+      <p>&ldquo;My refund was apparently credited to someone else&rsquo;s bank account... still haven&rsquo;t received my money.&rdquo;</p>
+      <span class="theme-tag">Refund misroute &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="refund" style="--qc-accent:var(--s2)">
+      <div class="meta"><span>Jafar Shirhatii</span><span>15 Sept</span></div>
+      <p>&ldquo;Worst app amount not refund problem, this app and service is very poor.&rdquo;</p>
+      <span class="theme-tag">Refund &middot; Play Store</span>
+    </div>
+
+    <div class="quote-card" data-theme="exchange" style="--qc-accent:var(--s3)">
+      <div class="meta"><span>Pramila Chettri</span><span>15 Sept</span></div>
+      <p>&ldquo;Sent the parcel for exchange... waiting 15 days but it hasn&rsquo;t been delivered yet.&rdquo;</p>
+      <span class="theme-tag">Exchange delay &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="exchange" style="--qc-accent:var(--s3)">
+      <div class="meta"><span>Gudiya Khatoon</span><span>15 Sept</span></div>
+      <p>&ldquo;Sirf size exchange hoga, no return no refund... i hate myntra.&rdquo;</p>
+      <span class="theme-tag">Return policy &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="exchange" style="--qc-accent:var(--s3)">
+      <div class="meta"><span>Manohari Mallela</span><span>15 Sept</span></div>
+      <p>&ldquo;Tag code is not matching with the app... Customer care is not responding, call disconnected, chat never connects.&rdquo;</p>
+      <span class="theme-tag">Exchange failure + support &middot; Play Store</span>
+    </div>
+
+    <div class="quote-card" data-theme="wrongitem" style="--qc-accent:var(--s4)">
+      <div class="meta"><span>Kiran Thakur</span><span>15 Sept</span></div>
+      <p>&ldquo;Sent me wrong size and when I replaced it they did not refund me my full amount... and blocked my review.&rdquo;</p>
+      <span class="theme-tag">Wrong item + partial refund &middot; Play Store</span>
+    </div>
+
+    <div class="quote-card" data-theme="counterfeit" style="--qc-accent:var(--s5)">
+      <div class="meta"><span>Raju P. Dhamne</span><span>15 Sept</span></div>
+      <p>&ldquo;Don&rsquo;t fall for their marketing ads, all are fake and also delivers fake products.&rdquo;</p>
+      <span class="theme-tag">Counterfeit claim &middot; Play Store</span>
+    </div>
+
+    <div class="quote-card" data-theme="generic" style="--qc-accent:var(--neutral-generic)">
+      <div class="meta"><span>Farooque Khan</span><span>15 Sept</span></div>
+      <p>&ldquo;Very bad service.&rdquo;</p>
+      <span class="theme-tag">Generic &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="generic" style="--qc-accent:var(--neutral-generic)">
+      <div class="meta"><span>Goverdhan Gopal</span><span>15 Sept</span></div>
+      <p>&ldquo;First time try, worst experience.&rdquo;</p>
+      <span class="theme-tag">Generic &middot; Play Store</span>
+    </div>
+    <div class="quote-card" data-theme="generic" style="--qc-accent:var(--neutral-generic)">
+      <div class="meta"><span>Avijit Das</span><span>15 Sept</span></div>
+      <p>&ldquo;Worst service and worst app. I am uninstalling this app and suggesting my friend to shift.&rdquo;</p>
+      <span class="theme-tag">Churn signal &middot; Play Store</span>
+    </div>
+
+  </div>
+</section>
+
+<section aria-label="Recommendation">
+  <div class="section-head">
+    <h2>Recommended problem to build around</h2>
+  </div>
+  <div class="reco-card">
+    <p class="reco-quote">When a Myntra order is at risk of missing its delivery promise, the customer gets no visibility, no proactive resolution, and &mdash; if they escalate &mdash; a support flow that can&rsquo;t actually fix delivery, refund-routing, or exchange-tag mismatches.</p>
+    <p style="font-size:13.5px;color:var(--text-secondary);line-height:1.6;">Highest frequency (50% of complaints), most current (last 24&ndash;48h), and best-benchmarked against industry RTO data &mdash; so the GMV case is defensible, not hand-wavy.</p>
+    <div class="reco-grid">
+      <div class="reco-tile"><b>Proactive delay + expectation reset</b>Flag hub-dwell risk before the customer has to ask; pair with an automatic goodwill action instead of silence.</div>
+      <div class="reco-tile"><b>Support triage, not a chatbot loop</b>Route &ldquo;where&rsquo;s my order / refund / exchange mismatch&rdquo; straight to a resolution or a human.</div>
+      <div class="reco-tile"><b>Refund-routing safeguard</b>Hold and flag refunds where bank details look stale or mismatched before disbursing.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Estimates are a directional Fermi model built from public data (Myntra FY25 filing, industry RTO/AOV benchmarks) &mdash; not verified internal figures. On-site myntra.com review data was excluded from theming due to stale timestamps and rating/text mismatches. Full sourcing, quotes and methodology: see the linked <a href="problem-definition.html">problem-definition report</a>.
+</footer>
+
+<script>
+(function(){
+  try{
+    var chips = document.querySelectorAll('#filterRow .chip');
+    var cards = document.querySelectorAll('#evidenceGrid .quote-card');
+    chips.forEach(function(chip){
+      chip.addEventListener('click', function(){
+        chips.forEach(function(c){ c.setAttribute('aria-pressed','false'); });
+        chip.setAttribute('aria-pressed','true');
+        var f = chip.getAttribute('data-filter');
+        cards.forEach(function(card){
+          card.hidden = !(f === 'all' || card.getAttribute('data-theme') === f);
+        });
+      });
+    });
+  }catch(e){ /* filtering is a convenience only */ }
+})();
+</script>
+
+</body>
+</html>

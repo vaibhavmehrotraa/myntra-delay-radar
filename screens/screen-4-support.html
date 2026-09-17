@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4 · Support already knows · Delay Radar Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #EFEDE9; }
+  body { display: flex; justify-content: center; padding: 24px 12px; font-family: 'Manrope', system-ui, sans-serif; }
+  .screen { width: 390px; max-width: 100%; height: 844px; background: #FAF9F7; display: flex; flex-direction: column; color: #14131A; overflow: hidden; border-radius: 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); }
+  .appbar { height: 56px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: #FFFFFF; border-bottom: 1px solid #ECEAE6; }
+  .appbar h1 { font-size: 15.5px; font-weight: 800; margin: 0; }
+  .iconbtn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 9px; color: #14131A; text-decoration: none; flex: none; }
+  .content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .bubble-row { display: flex; gap: 10px; align-items: flex-start; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #14131A; color: #fff; display: flex; align-items: center; justify-content: center; flex: none; font-size: 12px; font-weight: 800; }
+  .bubble { background: #FFFFFF; border: 1px solid #ECEAE6; border-radius: 14px; border-top-left-radius: 4px; padding: 13px 14px; font-size: 13px; line-height: 1.55; max-width: 280px; }
+  .bubble b { color: #FF3B6E; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding-left: 40px; }
+  .chip { border: 1.5px solid #ECEAE6; background: #FFFFFF; border-radius: 99px; padding: 8px 13px; font-size: 12px; font-weight: 700; text-decoration: none; color: #14131A; }
+  .thesis { margin-top: auto; text-align: center; color: #8B8996; font-size: 12px; font-weight: 700; padding: 10px 0 2px; }
+  .protonav { width: 390px; max-width:100%; margin: 0 auto 14px; text-align:center; font-family:'Manrope',sans-serif; }
+  .protonav a { font-size: 12.5px; font-weight: 700; color: #6B6976; text-decoration: none; }
+  .protonav a:hover { text-decoration: underline; }
+  .wrap-outer{ display:flex; flex-direction:column; align-items:center; }
+</style>
+</head>
+<body>
+<div class="wrap-outer">
+<div class="protonav"><a href="../index.html">&larr; Back to case study</a> &middot; Screen 4 of 5 &middot; Support already knows</div>
+<div class="screen">
+  <div class="appbar">
+    <a class="iconbtn" href="screen-2-tracking.html" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+    </a>
+    <h1>Help</h1>
+  </div>
+  <div class="content">
+    <div class="bubble-row">
+      <div class="avatar">M</div>
+      <div class="bubble">
+        Hi! I can already see order <b>#MYN48213</b> was delayed 18h at the Bhiwandi hub. We've added <b>&#8377;150 credit</b> to your wallet and moved the ETA to <b>Fri, 19 Sept</b>. Want to switch to express re-ship or a refund instead &mdash; or is waiting okay?
+      </div>
+    </div>
+    <div class="chips">
+      <a class="chip" href="screen-2-tracking.html">Keep waiting</a>
+      <a class="chip" href="screen-3-choice.html">Switch to express re-ship</a>
+      <a class="chip" href="screen-3-choice.html">Refund me instead</a>
+    </div>
+    <div class="thesis">No re-explaining. No hold music.</div>
+  </div>
+</div>
+</div>
+</body>
+</html>

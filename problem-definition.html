@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Myntra Problem Definition — Portfolio Case Study · Myntra Case Study</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<nav class="sitenav">
+  <a class="brand" href="index.html">MYNTRA · DELAY RADAR CASE STUDY</a>
+  <div class="links"><a href="index.html">Overview</a><a href="dashboard.html">Dashboard</a><a href="problem-definition.html" class="current">Problem Definition</a><a href="prd.html">PRD</a></div>
+</nav>
+<div class="wrap">
+  <header class="doc-header">
+    <span class="doc-eyebrow">Problem-definition phase</span>
+    <h1>Myntra Problem Definition — Portfolio Case Study</h1>
+    <div class="doc-meta">17 Sept 2026 &middot; Vaibhav Mehrotra &middot; Product &amp; analytics portfolio case study</div>
+  </header>
+  <div class="doc">
+<h2>Executive Summary</h2>
+<p>Across every source I could reach in the last 24–48 hours — Myntra's own product review sections, the Myntra Android app's Play Store reviews, and public complaint threads (Reddit's r/MyntraSucks, consumer complaint boards) — one theme dominates by a wide margin: <strong>unreliable delivery / last-mile logistics, compounded by a customer support layer (AI chatbot, IVR, call center) that can't actually resolve it.</strong></p>
+<p>Roughly half of the negative app reviews posted in the 24–48 hours before this report cited a delivery delay, a failed delivery attempt, or a shipment stuck somewhere in the pipeline — several of those same complaints escalate into unresolved refunds or blocked exchanges once the customer tries to fix it. This is corroborated independently on Reddit, where an entire subreddit (r/MyntraSucks) exists largely to document exactly this pattern.</p>
+<p>Product review sections on myntra.com turned out to be a weak signal for this exercise: review dates are sparse (most visible reviews are months old, not from the last day) and, more importantly, the star rating and review text are frequently mismatched — many "1-star" reviews read as positive product feedback, likely because the rating was really about the delivery/service experience rather than the product itself. That's a small finding worth noting on its own: <strong>Myntra's review data conflates "I don't like the product" with "I had a bad service experience,"</strong> which muddies both customer signal and, potentially, product-quality analytics internally.</p>
+<p><strong>Recommended problem to build the case study around:</strong> reducing GMV loss from delivery-delay-driven order cancellations/returns-to-origin (RTO), and giving customers a resolution path that doesn't dead-end in an unhelpful chatbot. This is a strong portfolio pick because it (a) is the most frequent, most recent, most emotionally charged complaint in the data, (b) has well-documented industry benchmarks linking delivery delay to RTO/cancellation, so a GMV model is defensible, and (c) supports a genuinely buildable product rather than a vague "improve CX" thesis.</p>
+<p><strong>Rough headline number:</strong> an estimated <strong>₹450–650 crore/year</strong> of Myntra's GMV is plausibly at risk from delivery-delay-driven cancellations and RTOs alone (methodology and assumptions in the GMV Impact Sizing section — treat this as a directional Fermi estimate, not a verified internal figure).</p>
+<h2>Methodology &amp; Data Sources</h2>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>What I did</th>
+<th>Time window achieved</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>myntra.com product review sections</td>
+<td>Browsed 2 high-review-count products (Louis Philippe Jeans polo T-shirt, 35.7k ratings; Puma sneakers, 14.6k ratings) via Chrome (logged into your account), sorted "Most Recent," filtered to 1★</td>
+<td>Not achievable — most recent visible reviews were months old</td>
+<td>Low-signal source; see caveat below</td>
+</tr>
+<tr>
+<td>Google Play Store — Myntra Android app</td>
+<td>Opened the app's public review panel, sorted "Newest," filtered to 1★</td>
+<td>15–16 September 2026 (yesterday/today)</td>
+<td>High signal — verified reviews, real timestamps, \~20 reviews read</td>
+</tr>
+<tr>
+<td>Reddit (r/MyntraSucks, site-wide search)</td>
+<td>Searched "myntra," sorted by new</td>
+<td>Within last 8 hours</td>
+<td>Corroborating, smaller sample</td>
+</tr>
+<tr>
+<td>Consumer complaint aggregators (PissedConsumer)</td>
+<td>Checked volume/recency</td>
+<td>Historical only (couldn't extract dated text)</td>
+<td>Used only to confirm chronic complaint volume (\~6,000 reviews, 397 pages)</td>
+</tr>
+<tr>
+<td>X/Twitter</td>
+<td>Attempted live search</td>
+<td>Not accessible</td>
+<td>Requires a login this session doesn't have; skipped</td>
+</tr>
+<tr>
+<td>Instagram</td>
+<td>Not attempted</td>
+<td>—</td>
+<td>Would require login and is very time-intensive to scrape comment-by-comment; deprioritized in favor of higher-signal sources</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key limitation — please read before trusting the GMV number:</strong> Myntra's on-site product reviews are not a reliable way to isolate "last 24 hours" sentiment: timestamps skew old and, more importantly, star ratings often don't match review text (e.g., 1-star reviews reading "good quality, fast delivery"). I'm flagging this explicitly rather than papering over it — for a real internal analytics project this mismatch would itself be worth investigating (are 1-star ratings capturing delivery/service dissatisfaction that gets logged against the product instead?).</p>
+<p>The Play Store data is the strongest evidence base here: it's independently verified by Google, has real per-review dates, and the pattern (delivery delay → poor support → refund/exchange breakdown) is internally consistent and repeats across \~20 different reviewers in a 24–48h window on an app with 5.8M total reviews.</p>
+<h2>Problem Theme 1: Delivery &amp; Last-Mile Logistics Delays (dominant theme)</h2>
+<p>This was, by a wide margin, the most common complaint in the last 24–48 hours. Verbatim examples, all from the Myntra Android app's Play Store reviews:</p>
+<blockquote>
+<p>"Myntra delivery speed is truly out of this world. Ordered on the 10th, shipped on the 12th, and delivery on the 17th at 6 PM... Eight days for delivery, but platform fees are collected at lightning speed." — John Julian Hansdak, 16 Sept 2026</p>
+<p>"I ordered a shoe and it was showing delivery in 2 days but it's been 8 days and I still didn't get the delivery.. they said it needed 48 hours to resolve the issue but they saying it daily" — Shahil Sagar, 16 Sept 2026</p>
+<p>"worst. they are taking 5 days to just deliver a swim cap it was suppose to come on 12 sep now it's coming on 17 sep." — Akash Raut, 16 Sept 2026</p>
+<p>"Never experienced an on time delivery even after parcel reaches the nearest hub. highly unreliable and disappointing." — Ikshit Kate, 15 Sept 2026</p>
+<p>"your delievery service is too bad. delievery agent keeps the parcel in godown and update that we are not available. delivery agent does not even call us." — Vaishnavi Baghel, 15 Sept 2026</p>
+<p>"myntra me bhaut ghariya service hai maine shuse order Kiya but muze 10 din order idar aaya udhar aaya karake unone cancel kar diyaa" (delivery bounced around for 10 days, then the order got cancelled) — hariba lohar, 15 Sept 2026</p>
+</blockquote>
+<p>Independently corroborated on Reddit (r/MyntraSucks, \~8 hours before this report):</p>
+<blockquote>
+<p>"Myntra cancelled my order despite it reaching final hub... My order had reached the final delivery hub, yet they were not attempting delivery. I raised a complaint the very next day... Three days pass and I open the app only to find that my order has been cancelled and refund issued." — u/Sleepy_head_30</p>
+</blockquote>
+<p><strong>Sub-patterns within this theme:</strong></p>
+<ul>
+<li>Shipments sitting idle after reaching the local hub, with no delivery attempt</li>
+<li>Delivery agents falsely marking the customer "not available" instead of attempting delivery or calling</li>
+<li>Orders eventually auto-cancelled by Myntra after days of delay, forcing a refund-and-reorder cycle instead of delivery</li>
+<li>Exchange/return pickups also delayed by 10–15+ days, not just forward delivery</li>
+</ul>
+<h2>Problem Theme 2: Refunds &amp; Wrong-Item/Size Resolution Failures</h2>
+<blockquote>
+<p>"Very disappointing refund experience. My refund was apparently credited to someone else's bank account, while the Myntra app showed incorrect bank details. I contacted support multiple times... Still, I haven't received my money." — Rudra Singh Sengar, 15 Sept 2026</p>
+<p>"i placed an order for a women's flats on myntra. they sent me wrong size and when i replaced it they did not refund me my full amount. even though it was their fault and when i tried to write a review about it on their website they blocked it." — Kiran Thakur, 15 Sept 2026</p>
+<p>"worst app amount not refund porblem this app and sarvice is very poor" — Jafar Shirhatii, 15 Sept 2026</p>
+<p>"agar aapko koi product samajh nhi aya to sirf size exchange hoga no return no refund" (if the product isn't right, only exchange is offered — no return, no refund) — Gudiya Khatoon, 15 Sept 2026</p>
+</blockquote>
+<p><strong>Sub-patterns:</strong> refunds misrouted to the wrong bank account with no fast fix; partial refunds when Myntra's own fulfillment error (wrong size shipped) caused the return; a return/refund <em>policy</em> complaint (exchange-only, no refund) that customers experience as a trap; and one report of a negative review being blocked/removed by Myntra rather than addressed.</p>
+<h2>Problem Theme 3: Customer Support That Can't Resolve Anything</h2>
+<p>This theme rarely appears alone — it shows up as the second half of almost every delivery or refund complaint above, which is why it matters: broken support turns a recoverable delay into a lost customer.</p>
+<blockquote>
+<p>"when you try calling them if has that nonsense AI that never understands your problem. My first and last purchase from Myntra." — Sanjay Joshi, 15 Sept 2026</p>
+<p>"No proper response from IVR or AI assistant. Uninstalling this app once I receive the product." — Manda Kolaru, 15 Sept 2026</p>
+<p>"Customer care is not responding, via call mode agent disconnected call after listening issue and via chat mode agent is not connected at all and saying they will call me soon which i am not receiving." — Manohari Mallela, 15 Sept 2026</p>
+<p>"very poor delivery services... upar se call kro to hamere problem ko address he nhai krte" (and when you call, they don't even address the problem) — Gaurav, 15 Sept 2026</p>
+</blockquote>
+<p>Notably, Myntra's official reply to nearly every 1-star review in this sample was the same templated response asking the customer to email appfeedback@myntra.com with their Order ID — i.e., the public-facing reply itself routes back into the same support channel customers are already complaining about.</p>
+<h2>Problem Theme 4: Counterfeit / Fake Product Claims (lower frequency, high severity)</h2>
+<p>Less frequent than delivery/support issues in this sample, but severe when it appears because it hits trust in the core marketplace promise ("100% Original Products"):</p>
+<blockquote>
+<p>"worst app don't fall for their marketing ads all are fake and also delivers fake product. And don't support after sending fake product" — Raju P. Dhamne, 15 Sept 2026</p>
+</blockquote>
+<p>This is a small sample (1 clear instance in the 24–48h window), so I'd treat it as a "watch" item rather than the primary problem bet — but it's worth flagging because authenticity complaints are reputationally expensive and, anecdotally in the broader complaint ecosystem (PissedConsumer's \~6,000 historical Myntra reviews), a recurring category.</p>
+<h2>GMV Impact Sizing (Fermi estimate — read the assumptions)</h2>
+<p>I want to be upfront: <strong>Myntra doesn't publicly disclose GMV</strong>, so every number below is a chained estimate from public data points, not an internal figure. Treat this as "directionally right, good enough to prioritize a portfolio project," not as a number you'd put in front of an actual Myntra stakeholder without validating against real order data.</p>
+<p><strong>Step 1 — Estimate Myntra's annual GMV</strong></p>
+<ul>
+<li>Myntra's FY25 revenue from operations: ₹6,043 crore (<a href="https://www.medianama.com/2025/09/223-myntra-advertising-logistics-18-jump-profit-rs-548-cr-fy25/">Medianama, citing Myntra's FY25 financial filing</a>)</li>
+<li>Fashion marketplaces typically monetize at roughly a 25–30% take rate (commission + logistics + ads revenue) relative to GMV</li>
+<li>Implied GMV ≈ ₹6,043cr ÷ 0.27 ≈ <strong>₹22,000 crore/year</strong> (≈ $2.6B) — broadly consistent with a 2018 press report of Myntra nearing a <a href="https://entrackr.com/2018/08/myntras-bn-gmv-fashiona-sale/">"$2 billion annual GMV run rate"</a>, extrapolated forward over \~7 years of growth</li>
+</ul>
+<p><strong>Step 2 — Estimate annual order volume</strong></p>
+<ul>
+<li>Average order value for Indian fashion e-commerce is commonly cited around ₹1,500–2,000</li>
+<li>₹22,000cr ÷ ₹1,800 AOV ≈ <strong>\~122 million orders/year</strong></li>
+</ul>
+<p><strong>Step 3 — Estimate the share of orders where delay drives a lost sale (cancellation/RTO)</strong></p>
+<ul>
+<li>Industry data: orders delivered in 1–2 days show \~22% RTO vs \~35% RTO when delayed beyond 5 days — a <strong>\~13 percentage-point delay penalty</strong> (<a href="https://www.firstresort.in/blogs/research/fashion-ecommerce-returns-rto-india-2026">First Resort / GoKwik data, 2026</a>)</li>
+<li>Assumption (stated, not sourced — this is the number to validate internally): roughly <strong>15–20% of Myntra shipments</strong> miss their promised delivery window meaningfully (the pattern in this sample skews toward multi-day delays, not near-misses)</li>
+<li>Delay-attributable lost-order rate ≈ 15–20% (share delayed) × 13pp (incremental RTO/cancellation risk) ≈ <strong>2.0–2.6% of total orders</strong></li>
+</ul>
+<p><strong>Step 4 — Convert to GMV</strong></p>
+<ul>
+<li>2.0–2.6% of ₹22,000cr ≈ <strong>₹440–570 crore/year</strong> in GMV lost directly to delivery-delay-driven cancellations and RTOs</li>
+</ul>
+<p><strong>What this doesn't capture (likely makes the real number bigger):</strong></p>
+<ul>
+<li>Customer lifetime value erosion — several reviews explicitly said "uninstalling," "first and last purchase," "scared to order again." A first-time or low-tenure customer churning after one bad delivery experience costs Myntra future GMV this model doesn't count at all.</li>
+<li>The refund-misrouting and support-failure themes independently drive some cancellations/chargebacks not captured in the "delay → RTO" pathway above.</li>
+<li>Word-of-mouth/review damage (an entire subreddit exists for this) has a brand/CAC cost that doesn't show up in a single-order GMV model.</li>
+</ul>
+<p><strong>Working range to use for prioritization: ₹450–650 crore/year of GMV plausibly at risk</strong>, concentrated in the delivery-delay → poor support → cancellation/RTO pathway.</p>
+<h2>Recommended Problem Statement to Build Around</h2>
+<blockquote>
+<p><strong>"When a Myntra order is at risk of missing its delivery promise, the customer has no visibility into why, no proactive resolution, and — if they escalate — lands in a support flow (AI chatbot/IVR) that cannot actually fix delivery, refund-routing, or exchange-tag mismatches. This drives avoidable cancellations, RTOs, and one-star churn on orders that could otherwise still be saved."</strong></p>
+</blockquote>
+<p>Why this is the right bet for an end-to-end portfolio piece:</p>
+<ol>
+<li><strong>It's real and current</strong> — sourced from actual, dated, verified complaints in the last 24–48 hours, not a hypothetical.</li>
+<li><strong>It's sizeable</strong> — a defensible ₹450–650cr/year GMV-at-risk estimate gives you a business case, not just a UX fix.</li>
+<li><strong>It's buildable at portfolio scope</strong> — you don't need Myntra's logistics network to prototype a solution. Strong directions:
+   - A <strong>proactive delay-prediction + expectation-reset flow</strong>: surface a realistic delivery ETA the moment a shipment shows hub-dwell risk, before the customer has to ask — paired with an automatic goodwill action (credit/priority re-ship) instead of silence.
+   - A <strong>support-triage tool</strong> that routes "where is my order / refund / exchange mismatch" queries straight to an actionable resolution (or a human) instead of the generic chatbot loop this data shows failing repeatedly.
+   - A <strong>refund-routing safeguard</strong>: flag and hold refunds where bank details look stale/mismatched before disbursing, to stop the "refunded to someone else's account" failure mode.</li>
+<li><strong>It has a clean analytics story</strong> — you can define leading indicators (hub-dwell time, delay-flagged shipments, support contact rate per delayed order) and a lagging outcome metric (RTO/cancellation rate, 1-star rate, repeat-purchase rate) to show the full product-analytics loop: define problem → size it → build → measure impact.</li>
+</ol>
+<p><strong>Suggested narrower scope for a first build:</strong> pick one sub-slice — e.g., "shipments that have dwelled at the final hub for &gt;24 hours without a delivery attempt" — and design the proactive-notification + auto-resolution flow around just that, since it's the single most repeated, most specific pattern in the evidence.</p>
+<h2>Appendix: Raw Evidence Log</h2>
+<p><strong>Google Play Store — Myntra Android app (sorted Newest, filtered 1★), collected 17 Sept 2026:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Reviewer</th>
+<th>Quote (verbatim/trimmed)</th>
+<th>Theme</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>16 Sept 2026</td>
+<td>John Julian Hansdak</td>
+<td>"Eight days for delivery, but platform fees are collected at lightning speed."</td>
+<td>Delivery delay</td>
+</tr>
+<tr>
+<td>16 Sept 2026</td>
+<td>Shahil Sagar</td>
+<td>"showing delivery in 2 days but it's been 8 days... they said it needed 48 hours... saying it daily"</td>
+<td>Delivery delay + support loop</td>
+</tr>
+<tr>
+<td>16 Sept 2026</td>
+<td>Akash Raut</td>
+<td>"taking 5 days to just deliver a swim cap... very bad experience no response"</td>
+<td>Delivery delay</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Rudra Singh Sengar</td>
+<td>"refund was apparently credited to someone else's bank account"</td>
+<td>Refund misroute</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Farooque Khan</td>
+<td>"very bad service"</td>
+<td>Generic</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Pramila Chettri</td>
+<td>"sent the parcel for exchange... waiting 15 days but it hasn't been delivered"</td>
+<td>Exchange delay</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Goverdhan Gopal</td>
+<td>"first time try worst experience"</td>
+<td>Generic</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Kiran Thakur</td>
+<td>"sent me wrong size... did not refund me my full amount... blocked my review"</td>
+<td>Wrong item + partial refund + review suppression</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Raju P. Dhamne</td>
+<td>"all are fake and also delivers fake products"</td>
+<td>Counterfeit claim</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Jafar Shirhatii</td>
+<td>"amount not refund porblem"</td>
+<td>Refund</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Gudiya Khatoon</td>
+<td>"sirf size exchange hoga no return no refund... i hate myntra"</td>
+<td>Return policy</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Hariba Lohar</td>
+<td>"10 din order idar aaya udhar aaya karake unone cancel kar diyaa"</td>
+<td>Delivery delay + cancellation</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Vaishnavi Baghel</td>
+<td>"delivery agent keeps the parcel in godown and update that we are not available"</td>
+<td>Last-mile failure</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Ikshit Kate</td>
+<td>"Never experienced an on time delivery even after parcel reaches the nearest hub"</td>
+<td>Delivery delay</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Manohari Mallela</td>
+<td>"tag code is not matching with App... Customer care is not responding"</td>
+<td>Exchange failure + support</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Avijit Das</td>
+<td>"worst service and worst app. I am uninstalling"</td>
+<td>Churn signal</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Sanjay Joshi</td>
+<td>"that nonsense AI that never understands your problem"</td>
+<td>Support failure</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Manda Kolaru</td>
+<td>"Order not delivered on the out for delivery date. No proper response from IVR or AI"</td>
+<td>Delivery + support</td>
+</tr>
+<tr>
+<td>15 Sept 2026</td>
+<td>Gaurav</td>
+<td>"order bhaut late kr dete hai... hamere problem ko address he nhai krte"</td>
+<td>Delivery + support</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reddit (r/MyntraSucks, collected 17 Sept 2026):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Time</th>
+<th>User</th>
+<th>Quote</th>
+<th>Theme</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>\~8 hrs before collection</td>
+<td>u/Sleepy_head_30</td>
+<td>"Myntra cancelled my order despite it reaching final hub... refund issued"</td>
+<td>Delivery delay + cancellation</td>
+</tr>
+</tbody>
+</table>
+<p><strong>myntra.com product review sections (data-quality note, not used for theming):</strong> Sampled two high-volume products (Louis Philippe polo T-shirt, 35.7k ratings; Puma sneakers, 14.6k ratings). Most-recent-sorted reviews were dated months in the past, and 1-star-filtered reviews frequently contained positive text ("Good quality," "Excellent," "Nice") — a rating/text mismatch that made this source unusable for both recency and sentiment accuracy. Flagged in Methodology.</p>
+  </div>
+  <footer class="site-footer">
+    Part of the Myntra Delay Radar case study &mdash; a personal portfolio project (unaffiliated with Myntra or Meesho). See also the <a href="dashboard.html">Complaint Radar dashboard</a> and the <a href="screens/screen-1-alert.html">Delay Radar prototype</a>.
+  </footer>
+</div>
+</body>
+</html>

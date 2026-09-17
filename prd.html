@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delay Radar — PRD · Myntra Case Study</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<nav class="sitenav">
+  <a class="brand" href="index.html">MYNTRA · DELAY RADAR CASE STUDY</a>
+  <div class="links"><a href="index.html">Overview</a><a href="dashboard.html">Dashboard</a><a href="problem-definition.html">Problem Definition</a><a href="prd.html" class="current">PRD</a></div>
+</nav>
+<div class="wrap">
+  <header class="doc-header">
+    <span class="doc-eyebrow">Product requirements document</span>
+    <h1>Delay Radar — PRD</h1>
+    <div class="doc-meta">17 Sept 2026 &middot; Vaibhav Mehrotra &middot; Product &amp; analytics portfolio case study</div>
+  </header>
+  <div class="doc">
+<h2>Overview &amp; Problem Recap</h2>
+<p>This PRD picks up where the <a href="problem-definition.html">problem-definition report</a> and the <a href="dashboard.html">Complaint Radar dashboard</a> left off. Across 20 dated complaints from the last 24–48 hours (Play Store, Reddit), delivery and logistics delay was the single dominant theme — 50% of complaints — and it compounds: customers who hit a delay and then hit an unhelpful support flow are the ones who say “uninstalling” or “first and last purchase.” We sized delay-driven cancellations and RTO alone at roughly ₹450–650 crore/year of GMV at risk.</p>
+<p>The pattern in the evidence is specific and repeats: a shipment sits at a hub well past its normal dwell time, nothing is communicated, the customer finds out only when they check obsessively or the order gets auto-cancelled days later, and if they try to get help, they land in a chatbot or IVR loop that can't actually do anything about it.</p>
+<p><strong>This PRD specs the fix for that specific pattern</strong>: a proactive delay-detection and expectation-reset flow that tells the customer what's happening before they have to ask, gives them real choices instead of silence, and makes sure support already has the context if they do reach out.</p>
+<h2>Goals, Non-Goals &amp; Success Criteria</h2>
+<p><strong>Goals</strong></p>
+<ul>
+<li>Catch a delivery delay before the customer has to notice or ask about it.</li>
+<li>Replace silence with a real reason, a real updated ETA, and a real choice.</li>
+<li>Cut delay-driven cancellations, RTOs, and 1-star/uninstall reactions.</li>
+<li>Make sure that if a customer <em>does</em> contact support, the agent or bot already has full context — no re-explaining.</li>
+</ul>
+<p><strong>Non-goals (for this PRD)</strong></p>
+<ul>
+<li>Fixing the underlying logistics/courier network causes of delay (hub congestion, courier capacity). This flow manages the customer experience <em>around</em> a delay; it doesn't prevent the delay itself.</li>
+<li>Building the full support-triage bot or the refund-routing safeguard from the original report — both are real, but they're separate builds, sequenced in Scope &amp; Phasing below.</li>
+<li>Guaranteeing zero delays. The goal is that a delay is never a silent, unmanaged surprise.</li>
+</ul>
+<p><strong>Success criteria (V1, directional targets — to be finalized against real baseline data)</strong></p>
+<ul>
+<li>Reduce the delay-attributable share of cancellations/RTO (baseline estimate: \~2.0–2.6% of orders, see the report's GMV sizing) by a meaningful fraction in flagged shipments.</li>
+<li>Reduce inbound “where is my order” support contacts on flagged shipments, since the app should answer that question before it's asked.</li>
+<li>Net GMV-positive: GMV protected from avoided cancellations/RTO and preserved repeat-purchase behavior should exceed the cost of goodwill credits/re-ships issued.</li>
+</ul>
+<h2>User Stories / Jobs-to-Be-Done</h2>
+<ul>
+<li><em>As a customer whose order is delayed</em>, I want to find out from Myntra before I have to go looking, so I don't feel ignored or forgotten.</li>
+<li><em>As a customer</em>, I want a real reason and a real new delivery date, not a vague “please wait” — several of the reviews in the evidence log explicitly mock the lack of a straight answer.</li>
+<li><em>As a customer</em>, I want to choose how it gets fixed — wait with something for my trouble, get a replacement faster, or just get my money back — rather than have the outcome decided for me or find out only after an auto-cancellation.</li>
+<li><em>As a customer who does reach out to support</em>, I want the agent or bot to already know my order is delayed and what's already been done, so I'm not re-explaining a problem Myntra's own systems already flagged.</li>
+<li><em>As Myntra</em>, I want to intervene automatically, before the customer cancels, returns, or churns, so the delay costs less in GMV and trust than a silent one would.</li>
+</ul>
+<h2>Solution Overview</h2>
+<p>A four-stage loop, prototyped screen-by-screen in the <a href="screens/screen-1-alert.html">Delay Radar prototype</a>:</p>
+<ol>
+<li><strong>Detect.</strong> A background job scores every in-transit shipment against its expected hub-to-hub timing. When a shipment's dwell time or transit time breaches its threshold (see Detection Logic below), it's flagged <em>before</em> it becomes a customer complaint — not after.</li>
+<li><strong>Notify &amp; reset expectations</strong> *(Screen 1–2)). The customer sees a proactive alert — in-app first, push-notification-eligible — with what happened, in plain language, plus a realistic new ETA. No “your order is on its way!” false cheer. The order-detail screen shows the delay transparently inside the existing tracking timeline, and shows that a goodwill credit has already been applied — automatically, not something the customer has to fight for.</li>
+<li><strong>Customer chooses</strong> <em>(Screen 3)</em>. Instead of Myntra unilaterally deciding the resolution, the customer picks: keep waiting (with the credit already applied), get a free express re-ship of a backup unit, or take an instant refund. This directly answers the “they blocked my review,” “no return no refund,” and “cancelled without asking me” complaints in the evidence — the customer isn't stuck with an outcome imposed on them.</li>
+<li><strong>Close the loop</strong> <em>(Screens 4–5)</em>. If the customer contacts support anyway, the agent/bot opens already knowing the order, the delay, and what's been done — the direct fix for “that nonsense AI never understands your problem.” After a resolution is chosen, a confirmation screen closes the loop and captures a one-tap satisfaction read, which feeds back into tuning the detection thresholds and goodwill tiers over time.</li>
+</ol>
+<h2>Detection Logic &amp; Goodwill Tiering</h2>
+<p><strong>V1 detection scope:</strong> hub-dwell delays only — a shipment sitting at a sorting/transit hub longer than expected. This is deliberately narrower than “all delay causes” (it excludes last-mile agent no-shows and pre-dispatch delays, which need different signals — see Scope &amp; Phasing) because hub-dwell time is the most common, most clearly logged pattern in the evidence (the 5–day swim cap, the 8–day shirt, the shipment “never attempted after reaching the nearest hub”).</p>
+<p><strong>Risk scoring:</strong> for each shipment, compare live hub-dwell time against the historical median dwell time for that specific hub-lane pair (not a single global constant — a regional hub with typically slower throughput shouldn't fire as often as one that's normally fast). Flag when dwell time exceeds roughly 1.5× the lane's median, <em>and</em> exceeds an absolute floor (e.g. 12 hours) so a naturally slow-but-normal lane doesn't spam alerts.</p>
+<p><strong>Goodwill tiers</strong>, escalating with severity and evidence-backed by how the complaints actually described impact:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Trigger</th>
+<th>Customer sees</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 — Early flag</td>
+<td>Dwell &gt; 1.5× lane median, &lt; 24h beyond original promise</td>
+<td>Proactive notice + new ETA only</td>
+</tr>
+<tr>
+<td>2 — Meaningful delay</td>
+<td>24–72h beyond original promise</td>
+<td>Notice + new ETA + automatic ₹150 wallet credit + resolution choice screen</td>
+</tr>
+<tr>
+<td>3 — Severe / repeat</td>
+<td>&gt; 72h beyond promise, or a second delayed order for the same customer within 90 days</td>
+<td>Everything in Tier 2, plus express re-ship pre-approved (no backorder check needed before offering it)</td>
+</tr>
+</tbody>
+</table>
+<p>Tiers and thresholds are starting assumptions for the V1 build — they should be validated against real dwell-time distributions and tuned during the shadow-mode phase (Success Metrics &amp; Measurement Plan) before any customer-facing rollout.</p>
+<h2>UX Requirements, Screen by Screen</h2>
+<p>Full interactive prototype: <a href="screens/screen-1-alert.html">Delay Radar prototype</a> (5 linked screens, click through top to bottom).</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Screen</th>
+<th>Must show</th>
+<th>Must NOT do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Orders — proactive alert</td>
+<td>The delay surfaced at the top of Orders, in plain language, with a one-tap path to detail. Must appear without the customer opening the order.</td>
+<td>Bury the alert below the fold, or use generic “something went wrong” copy</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Order detail — transparent tracking</td>
+<td>The existing timeline with the delay called out at the exact step it happened, dwell time vs. normal, new ETA, and the credit already applied</td>
+<td>Hide <em>why</em> it's delayed, or make the credit something the customer has to claim</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Make it right</td>
+<td>All three resolution choices visible without scrolling on a standard phone, current selection state clear, one-tap confirm</td>
+<td>Default to the outcome that's cheapest for Myntra dressed up as a “recommended” option</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Support, with context</td>
+<td>The first message (bot or human-assisted) already references the order, delay reason, and action already taken</td>
+<td>Ask the customer to restate their order number or the problem</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Resolution confirmation</td>
+<td>What was chosen, the new commitment (date or refund timeline), and a lightweight satisfaction check</td>
+<td>End the flow without confirming the new commitment in writing</td>
+</tr>
+</tbody>
+</table>
+<p>All five screens deliberately avoid a fake OS status bar or device chrome — the point is the in-app experience, not a device recreation.</p>
+<h2>Success Metrics &amp; Measurement Plan</h2>
+<p><strong>Leading indicators</strong> (tell you the system is working before GMV outcomes show up)</p>
+<ul>
+<li>Detection recall: % of shipments that ended up meaningfully late that were correctly flagged in advance</li>
+<li>Lead time: median hours between a flag firing and the original promised delivery date (bigger = more room to act)</li>
+<li>Notification engagement: % of flagged customers who open/view the proactive alert</li>
+<li>Self-serve resolution rate: % of flagged customers who pick an outcome in-app without contacting support</li>
+</ul>
+<p><strong>Lagging indicators</strong> (the actual business outcome)</p>
+<ul>
+<li>Delay-attributable cancellation/RTO rate on flagged shipments vs. a held-out control group (baseline estimate from the report: \~2.0–2.6% of all orders are lost this way industry-wide)</li>
+<li>Support contact rate per delayed order (target: down, since Screen 4 exists precisely to make contacting support less necessary and more effective when it happens)</li>
+<li>1-star / delivery-mention review rate</li>
+<li>60-day repeat purchase rate for customers who experienced a flagged delay vs. customers who didn't</li>
+</ul>
+<p><strong>Guardrail metrics</strong> (don't win on the primary metric by breaking something else)</p>
+<ul>
+<li>Cost per goodwill action issued (credits + express re-ships) vs. GMV protected — must stay net positive</li>
+<li>False-positive rate: shipments flagged that actually arrived on time (drives unnecessary anxiety/credit spend if too high)</li>
+</ul>
+<p><strong>Rollout / experiment design</strong></p>
+<ol>
+<li><strong>Shadow mode</strong> — detection runs and logs flags, nothing customer-facing ships. Validates detection recall and false-positive rate against real outcomes before any customer sees a notification.</li>
+<li><strong>A/B test</strong> — on a subset of hubs/lanes, flagged customers get the full flow (Screens 1–5); a control group gets the current (silent) experience. Measure the lagging indicators above over a full order-to-resolution cycle.</li>
+<li><strong>Full rollout</strong> — only if the A/B shows the flow is net GMV-positive (GMV protected + retained LTV &gt; cost of credits/re-ships) and the false-positive rate is low enough not to erode trust on its own.</li>
+</ol>
+<h2>Scope &amp; Phasing</h2>
+<p><strong>V1 (this PRD)</strong></p>
+<ul>
+<li>Detection limited to hub-dwell delays on the standard shipping network</li>
+<li>Proactive notification + transparent tracking (Screens 1–2)</li>
+<li>Three-way customer-chosen resolution with automatic Tier 1–2 credit (Screen 3)</li>
+<li>Context handoff to existing support tooling so a human agent sees the flag and actions taken (a lighter version of Screen 4 — full bot automation is V2)</li>
+<li>Confirmation + 1-tap feedback (Screen 5)</li>
+</ul>
+<p><strong>V2 (roadmap)</strong></p>
+<ul>
+<li>Extend detection to last-mile failures — delivery-agent no-shows and false “customer not available” marks — using delivery-agent attempt/geolocation logs, a distinct signal from hub-dwell time</li>
+<li>Build out the full <strong>support-triage tool</strong> from the original report: automatically route “where's my order / refund / exchange mismatch” contacts to the right resolution instead of a generic bot loop, using the same delay/context data this PRD's flow generates</li>
+</ul>
+<p><strong>V3 (roadmap)</strong></p>
+<ul>
+<li>The <strong>refund-routing safeguard</strong>: flag and hold refunds where bank details look stale or mismatched before disbursing, addressing the “refunded to someone else's account” failure mode from the evidence</li>
+</ul>
+<p><strong>Explicitly out of scope, any phase:</strong> renegotiating courier contracts, warehouse/hub automation, or anything that changes <em>why</em> delays happen rather than how they're handled when they do.</p>
+<h2>Risks, Dependencies &amp; Open Questions</h2>
+<p><strong>Dependencies</strong></p>
+<ul>
+<li>Requires shipment tracking data at hub-level granularity, in near-real-time — needs confirmation that the logistics stack exposes per-hub scan timestamps at the freshness this needs.</li>
+<li>Requires an available wallet-credit and refund-issuance API that this flow can call automatically, without a manual ops step per case.</li>
+</ul>
+<p><strong>Risks</strong></p>
+<ul>
+<li><strong>Alert fatigue / false positives</strong>: if the delay-risk threshold is too sensitive, customers get flagged for orders that arrive fine, spending goodwill credit and eroding trust in the alerts themselves. Mitigated by the shadow-mode validation step before any customer-facing rollout.</li>
+<li><strong>Margin erosion</strong>: automatic credits and re-ships at scale cost real money; Tier 3 in particular (pre-approved express re-ship) needs a hard cap or finance sign-off so a bad week of hub congestion doesn't become an uncapped liability.</li>
+<li><strong>Backup-unit availability</strong>: the “free express re-ship” choice assumes a backup unit exists in nearby inventory. If it frequently doesn't, the option needs to gray out dynamically rather than over-promise.</li>
+</ul>
+<p><strong>Open questions</strong></p>
+<ul>
+<li>Who owns the decision on express re-ship inventory allocation — is stock actually reliably available, and who's accountable if it isn't?</li>
+<li>What's the actual current hub-dwell distribution by lane? The 1.5×-median / 12-hour-floor thresholds in this PRD are working assumptions, not fitted to real data yet.</li>
+<li>Does legal/finance need to approve the goodwill-tier credit amounts and the auto-refund path before this can ship, given it moves money without a human approval step?</li>
+</ul>
+<h2>Appendix</h2>
+<ul>
+<li><a href="problem-definition.html">Problem-definition report</a> — full evidence log, sourcing, and GMV sizing methodology</li>
+<li><a href="dashboard.html">Complaint Radar dashboard</a> — scannable view of the same findings</li>
+<li><a href="screens/screen-1-alert.html">Delay Radar prototype</a> — the 5-screen clickable flow this PRD specs</li>
+</ul>
+  </div>
+  <footer class="site-footer">
+    Part of the Myntra Delay Radar case study &mdash; a personal portfolio project (unaffiliated with Myntra or Meesho). See also the <a href="dashboard.html">Complaint Radar dashboard</a> and the <a href="screens/screen-1-alert.html">Delay Radar prototype</a>.
+  </footer>
+</div>
+</body>
+</html>
